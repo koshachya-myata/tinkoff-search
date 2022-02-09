@@ -1,0 +1,74 @@
+* {
+    font-family: 'Open Sans';
+    font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  src: url(https://fonts.gstatic.com/s/opensans/v27/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+#content {
+    padding-left: 20px;
+    width: 640px;
+    display: inline-block;
+}
+
+a {
+    color: #1a0dab;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+body {
+    font-size: 24px;
+    padding: 12px;
+    font: Helvetica, sans-serif;
+}
+
+.but__search
+{
+    font-size: 20px;
+    border-radius: 12px;
+    border: 1px solid lightgrey;
+    background: #F9F9F9;
+    padding: 2px 10px 2px 10px;
+}
+.title{
+    float: left;
+}
+#title {
+    font-family: 'BlinkMacSystemFont',system-ui,'Roboto';
+    /*background-image: linear-gradient(to right, blue, red, orange, blue, green, red);*/
+    -webkit-background-clip: text;
+    /*color: transparent;*/
+    display: inline-block;
+    float: right;
+    font-size: 48px;
+    margin-bottom: 40px;
+}
+
+.result {
+    padding: 20px;
+    padding-bottom: 0px;
+}
+
+.headline {}
+
+.annotation {
+    font-size: 18px;
+}
+
+.score {
+    font-size: 14px;
+    float: right;
+}
+
+input[type=submit]:hover {
+    cursor: pointer;
+}
+
+input:focus {
+    outline: none;
+}

@@ -1,0 +1,41 @@
+
+<!doctype html>
+<html>
+<head>
+    <title>{{ search_engine_name }} Search</title>
+    <meta charset="utf-8"> 
+    <link href="/static/css/style.css" rel="stylesheet" />
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico"/>
+</head>
+<body>
+
+<div class = "title">
+    <img src="/static/img/tinkoff_logo.jpg" alt="" width="80px" height="80px" style="display: inline-block; float: left; margin-top: -5px">
+    <span id='title'>{{ search_engine_name }}</span>
+</div>
+
+<div id="content">
+
+    <form style='padding: 4px; padding-top: 18px;' method = 'GET'>
+        <input type='text' style='border-radius: 12px; border: 1px solid lightgrey; width:520px; font-size: 20px; padding: 2px; padding-left: 8px;' name='query' value='{{ query }}'>
+        <input type='submit' class="but__search" value='Search'>
+    </form>
+
+    <hr style='border: none; border-bottom: 1px solid lightgrey;'>
+
+    {% if query != '' %}
+    <div style='font-size:16px; text-align: right; padding-right: 10px;'>Found {{ results|length}} documents in {{ time }} seconds.</div>
+    {% endif %}
+
+
+    {% for title, annotation, score in results %}
+        <div class='result'>
+            <div class='score'>{{ score }} </div>
+            <div class='headline'><a href='#'>{{ title }}</a></div>
+            <div class='annotation'>{{ annotation | replace('\n', ' / '|safe) }}</div>
+        </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>
