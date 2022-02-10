@@ -1,37 +1,38 @@
-from nltk.tokenize import word_tokenize, sent_tokenize
-from pymystem3 import Mystem
-from nltk.stem.snowball import SnowballStemmer
-import re
-import string
-import nltk
-from nltk.corpus import stopwords
-nltk.download('stopwords')
+import numpy as np
 
-wnl = nltk.WordNetLemmatizer()
-stopWords = set(stopwords.words("russian"))
-mystem = Mystem() 
-stemmer = SnowballStemmer(language="russian")
-def remove_numbers(text):
-    return ''.join([i if not i.isdigit() else ' ' for i in text])
+def build_invert_index(texts, index={}):
+    for i, word in enumerate(texts):
+        for w in set(word.split()):
+            if w not in index:
+                index[w] = []
+            if i not in index[w]:
+                index[w].append(i)
+    return index
 
-def remove_punctuation(text):
-    punc = "!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~»«—–-"
-    return "".join([ch if ch not in punc else ' ' for ch in text])
+def intersect_2sets(set_a, set_b):
+    # в моем случае они еще предварительно
+    # отсортированы по рейтингу
+    set1 = list(set_a)
+    set2 = list(set_b)
+    i = 0
+    j = 0
+    rt = []
+    while i < len(set1) and j < len(set2):
+        if set1[i] < set2[j]:
+            i += 1
+        elif set1[i] > set2[j]:
+            j += 1
+        else:
+            rt.append(set1[i])
+            i += 1
+            j += 1
+    return set(rt)
 
-def remove_multiple_spaces(text):
-    return re.sub(r'\s+', ' ', text, flags=re.I)
-
-def lemmatize(text):
-    return ''.join(mystem.lemmatize(text.lower()))
-
-def stem(text):
-    return ''.join([stemmer.stem(word) for word in text])
-
-def delete_stopwords(text):
-    return ' '.join([(word) for word in word_tokenize(text) if word not in stopWords])
-
-def preproccessing2(text):
-    return remove_multiple_spaces((remove_punctuation(delete_stopwords(remove_numbers(lemmatize(text.rstrip()))))))
-
-def preproccessing(text):
-    return remove_multiple_spaces(delete_stopwords(stem(remove_numbers(remove_punctuation(text.strip())))))
+def precision_at_k(actual, predicted, k):
+    # функцию я реализовал, но руками не размечал ничего
+    # поэтому не пригодилась
+    s = 0
+    for el in predicted[:k]:
+        if el in actual:
+            s += 1
+    return s / k

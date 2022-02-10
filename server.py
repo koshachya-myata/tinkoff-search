@@ -13,7 +13,7 @@ def index():
     if query is None:
         query = ''
     documents = retrieve(query)
-    documents = sorted(documents, key=lambda doc: -score(query, doc))
+    documents = sorted(documents, key=lambda doc: -score(query, doc))[:30]
     results = [doc.format(query)+['%.2f' % score(query, doc)] for doc in documents] 
     return render_template(
         'index.html',

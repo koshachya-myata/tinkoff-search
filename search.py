@@ -1,82 +1,71 @@
 import numpy as np
-import pandas as pd
-import multiprocessing as mp
 import swifter
 from sklearn.feature_extraction.text import TfidfVectorizer
-import random
-import nltk
-from nltk.corpus import stopwords
-from pymystem3 import Mystem
-from nltk.stem.snowball import SnowballStemmer
-import re
-import string
-from nltk.tokenize import word_tokenize, sent_tokenize
 import pickle
-from utils import preproccessing
 from sklearn.metrics.pairwise import cosine_similarity,cosine_distances
+
+from utils import intersect_2sets, precision_at_k, build_invert_index
+from process import preproccessing
+
+class Document:
+    def __init__(self, title, text, rating, text_processed, title_processed):
+        self.title = title
+        self.text = text
+        self.rating = rating
+        self.text_processed = text_processed
+        self.title_processed = title_processed
+    
+    def format(self, query):
+        return [self.title, self.text[:85] + ' ...']
+
+index = []
+inv_index = {}
 
 f = open('pickled', 'rb')
 data = pickle.load(f)
 vectorizer = data['text_model']
+vectorizer_title = data['title_model']
 f.close()
 
-class Document:
-    def __init__(self, title, text, rating, text_vec, text_processed, title_processed):
-        # можете здесь какие-нибудь свои поля подобавлять
-        self.title = title
-        self.text = text
-        self.rating = rating
-        self.text_vec = text_vec
-        self.text_processed = text_processed
-        self.title_processed = title_processed
-
-    
-    def format(self, query):
-        # возвращает пару тайтл-текст, отформатированную под запрос
-        return [self.title, self.text[:85] + ' ...']
-
-index = []
-
-index2 = {}
 def build_index():
-    # считывает сырые данные и строит индекс
+    global index
+    global inv_index
+
     for i in range(len(data['titles'])):
         index.append(Document(title=data['titles'][i], text=data['texts'][i], 
-            rating=data['ratings'][i], text_vec=data['texts_vec'][i],
+            rating=data['ratings'][i],
             text_processed=data['texts_processed'][i],
             title_processed=data['titles_processed'][i]))
-
-    for i in range(len(data['titles'])):
-        for word in set(data['texts_processed']):
-            if word not in index2:
-                index2[word] = []
-            index2[word].append(i)
-        for word in set(data['titles_processed']):
-            if word not in index2:
-                index2[word] = []
-            index2[word].append(i)
+    # обратный индекс строится долговато
+    inv_index = build_invert_index(data['texts_processed'])
+    inv_index = build_invert_index(data['titles_processed'], inv_index)
+    #for w in inv_index.keys():  # я вообще их в ноутбуке сортирую. Тут просто еще раз
+    #                            # чтобы и для не сорт. данных работало.
+    #    inv_index[w].sort(key=lambda ind: index[ind].rating, reverse=True)
 
 def score(query, document):
-    # возвращает какой-то скор для пары запрос-документ
-    # больше -- релевантнее
-    vec1 = document.text_vec
-    vec2 = np.squeeze(vectorizer.transform([preproccessing(query.lower()).rstrip()]).todense())
-    return cosine_similarity(vec1, vec2)[0][0]
-    return random.random()
+    q_text_model = np.squeeze(vectorizer.transform([preproccessing(query.lower()).rstrip()]).todense())
+    q_title_model = np.squeeze(vectorizer_title.transform([preproccessing(query.lower()).rstrip()]).todense())
+    d_text_model = np.squeeze(vectorizer.transform([document.text_processed]).todense())
+    d_title_model = np.squeeze(vectorizer_title.transform([document.title_processed]).todense())
+    c1 = cosine_similarity(d_text_model, q_text_model)[0][0]
+    c2 = cosine_similarity(d_title_model, q_title_model)[0][0]
+    # можно было бы обучить лин. рег., но для этого
+    # нужно руками разметить какое-нибудь число данных
+    # а я не очень хочу это делать
+    return 0.5*c1 + 0.5*c2
+
 
 def retrieve(query):
-    print(query)
-    # возвращает начальный список релевантных документов
-    # (желательно, не бесконечный)
-    if query == '' or query:
-        candidates = []
-        for doc in index:
-            if query.lower() in doc.title.lower() or query in doc.text.lower():
-                candidates.append(doc)
-        return candidates[:50]
-
-    kw = query.split()
-    s = set(index2[kw[0]])
+    if query == '':
+        return index[:30]
+    q = preproccessing(query.lower())
+    kw = q.split()
+    if len(kw) == 0 or kw[0] not in inv_index.keys():
+        return []
+    rt = inv_index[kw[0]]
     for w in kw[1:]:
-        s.intersect(index2[word])
-    return list(s)
+        if w not in inv_index.keys():
+            return []
+        rt = intersect_2sets(rt, inv_index[w])
+    return [index[d] for d in list(rt)[:1000]] # я там в сервере потом отрезаю до 30, уже по скору, а не только по рейтингу
